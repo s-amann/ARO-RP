@@ -57,24 +57,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	var resources []kruntime.Object
-	// this loop prevents us from hard coding resource strings
-	// and ensures all static resources are accounted for.
 
-	mhcBytes, err := Asset("machinehealthcheck.yaml")
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	mhcResource, _, err := scheme.Codecs.UniversalDeserializer().Decode(mhcBytes, nil, nil)
+	mhcResource, err := createKubeResourceFromAsset("machinehealthcheck.yaml", scheme.Codecs.UniversalDeserializer())
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 	resources = append(resources, mhcResource)
 
-	mhcAlertBytes, err := Asset("mhcremediationalert.yaml")
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	mhcAlertResource, _, err := monitoring.Codecs.UniversalDeserializer().Decode(mhcAlertBytes, nil, nil)
+	mhcAlertResource, err := createKubeResourceFromAsset("mhcremediationalert.yaml", monitoring.Codecs.UniversalDeserializer())
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -99,6 +89,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func createKubeResourceFromAsset(assetName string, decoder kruntime.Decoder) (kruntime.Object, error) {
+	byteData, err := Asset(assetName)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeResource, _, err := decoder.Decode(byteData, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return kubeResource, nil
 }
 
 // SetupWithManager will manage only our MHC resource with our specific controller name
