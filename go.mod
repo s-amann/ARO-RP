@@ -83,6 +83,7 @@ require (
 	github.com/pires/go-proxyproto v0.6.1
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.56.2
 	github.com/prometheus/client_golang v1.12.0
 	github.com/prometheus/common v0.32.1
 	github.com/sirupsen/logrus v1.8.1

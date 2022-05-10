@@ -8,6 +8,7 @@ import (
 	"time"
 
 	machinev1beta1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
+	monitoring "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -58,19 +59,26 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	var resources []kruntime.Object
 	// this loop prevents us from hard coding resource strings
 	// and ensures all static resources are accounted for.
-	for _, assetName := range AssetNames() {
-		b, err := Asset(assetName)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
 
-		resource, _, err := scheme.Codecs.UniversalDeserializer().Decode(b, nil, nil)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		resources = append(resources, resource)
+	mhcBytes, err := Asset("machinehealthcheck.yaml")
+	if err != nil {
+		return reconcile.Result{}, err
 	}
+	mhcResource, _, err := scheme.Codecs.UniversalDeserializer().Decode(mhcBytes, nil, nil)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	resources = append(resources, mhcResource)
+
+	mhcAlertBytes, err := Asset("mhcremediationalert.yaml")
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	mhcAlertResource, _, err := monitoring.Codecs.UniversalDeserializer().Decode(mhcAlertBytes, nil, nil)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	resources = append(resources, mhcAlertResource)
 
 	// helps with garbage collection of the resources we are dealing with
 	err = dynamichelper.SetControllerReferences(resources, instance)

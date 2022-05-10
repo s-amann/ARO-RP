@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: mhc-remediation-alert
+  namespace: openshift-machine-api
+spec:
+  groups:
+  - name: mhc-remediation-alert
+    rules:
+    - alert: MachineHealthCheckRemediationRateHigh
+      expr: increase(mapi_machinehealthcheck_remediation_success_total [60m]) >= 3
+      Annotations:
+        Message:  cluster nodes have been remediated 3 or more times in the last hour
+      labels:
+        severity: warning
